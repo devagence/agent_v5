@@ -1,0 +1,26 @@
+workflows:
+  android-debug:
+    name: Lailaba Device Agent Android
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      java: 17
+    scripts:
+      - name: Download Gradle 8.9
+        script: |
+          set -euo pipefail
+          if [ ! -d "$HOME/gradle-8.9" ]; then
+            curl -fL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o /tmp/gradle.zip
+            unzip -q /tmp/gradle.zip -d "$HOME"
+          fi
+      - name: Verify Android SDK
+        script: |
+          set -euo pipefail
+          echo "ANDROID_HOME=${ANDROID_HOME:-not-set}"
+          test -n "${ANDROID_HOME:-}" -a -d "$ANDROID_HOME/platforms" || { echo "Android SDK is not available on this runner"; exit 1; }
+      - name: Build debug APK
+        script: |
+          set -euo pipefail
+          "$HOME/gradle-8.9/bin/gradle" --no-daemon --stacktrace assembleDebug
+    artifacts:
+      - app/build/outputs/apk/debug/app-debug.apk
